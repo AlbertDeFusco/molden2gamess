@@ -9,7 +9,7 @@ As of right now this script works for
 
 Example Molden format files are provided in the `tests` directory.
 
-<b>Reminder:</b> This script cannot set `ISPHER` or `SCFTYP`, you will need to fix those values after conversion.
+<b>Reminder:</b> This script cannot set `ISPHER` or `SCFTYP`, you will need to fix those values after conversion. Also, ECP inputs are not included in the Molden format and must be added manually.
 
 Usage:
 ```
