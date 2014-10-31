@@ -57,7 +57,7 @@ class Atom(object):
     self.basis.append( (shell,prims) )
 
   def printAtom(self):
-    print "%-8s %5.1f %15.8f %15.8f %15.8f" % (
+    print "%-8s %5.1f %20.15f %20.15f %20.15f" % (
         self.name,
         self.number,
         self.coord[0],self.coord[1],self.coord[2] )
@@ -133,20 +133,19 @@ class Orbitals(object):
       numLines=len(orb[1])/orbWidth
       remainder=len(orb[1])%orbWidth
       for line in range(numLines):
-        head= "%2d%3d" % (num+1,line+1)
+        head= "%2d%3d" % ((num+1)%100,line+1)
         s = line*orbWidth
         e = s + orbWidth
         thisLine = [ ("%15.8E" % myOrb) for myOrb in orb[1][s:e] ]
         print(head+"".join(thisLine))
       if remainder>0:
-        head= "%2d%3d" % (num+1,line+2)
+        head= "%2d%3d" % ((num+1)%100,line+2)
         thisLine = [ ("%15.8E" % myOrb) for myOrb in orb[1][e:e+remainder] ]
         print(head+"".join(thisLine))
 
   def makeMap(self,atoms):
     #generate a look-up table of shell type and primitive GTOs
     #in the MO coefficients
-    #self.gtoMap = ['-']*sum( [atom.numGTOs() for atom in atoms] )
     self.gtoMap = {}
     totalGTOs=0
     for num,atom in enumerate(atoms):
@@ -155,9 +154,6 @@ class Orbitals(object):
         for entry in atom.gtoMap[shell]:
           start=entry[0]+totalGTOs
           end=entry[1]+totalGTOs
-          #there should be a one-line way to do this
-          #for i in range(start,end):
-            #self.gtoMap[i] = shell
           if shell in self.gtoMap.keys():
             self.gtoMap[shell].append( (start,end) )
           else:
@@ -292,7 +288,7 @@ def printData(params,atoms):
   print " $END"
 
 def printContrl(params):
-  print " $CONTRL coord=unique units=%4s $END" % params.units
+  print " $CONTRL ispher=XX scftyp=XX coord=unique units=%4s $END" % params.units
 
 def printGuess(params):
   print " $GUESS guess=moread norb=%-d prtmo=.f. purify=.t. $END" % params.numMOs
@@ -330,4 +326,5 @@ if __name__ == "__main__":
   printData(params,atoms)
   printVec(orbitals)
 
+  print >> sys.stderr, "REMINDER: fix SCFTYP and ISPHER"
 
