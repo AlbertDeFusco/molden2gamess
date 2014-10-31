@@ -13,7 +13,6 @@ class Parameters(object):
 
 # Atoms have coordinates and a basis set
 class Atom(object):
-
   def __init__(self,name,number):
     self.name=name
     self.number=number
@@ -37,9 +36,16 @@ class Atom(object):
     for contraction in self.basis:
       print "%2s %5d" % (contraction[0].upper(),len(contraction[1]))
       for num,GTO in enumerate(contraction[1]):
-        print "%4d %20.10f %20.10f" % (num+1,GTO[0],GTO[1])
+        if contraction[0] == "l":
+          print "%4d %20.10f %20.10f %20.10f" % (num+1,GTO[0],GTO[1],GTO[2])
+        else:
+          print "%4d %20.10f %20.10f" % (num+1,GTO[0],GTO[1])
     print
 
+class Orbital(object):
+  def __init__(self):
+    self.alpha=list()
+    self.beta=list()
 
 # Extract a Molden format group
 # to a list for further processing.
@@ -61,7 +67,6 @@ def grabGroup(inputFile,groupName):
 
 # return a list of Atoms
 def readCoord(params,inputFile):
-  params.setTitle(grabGroup(inputFile,"Title")[1][0])
   moldenAtoms = grabGroup(inputFile,"Atoms")
 
   if moldenAtoms[0][1] == "AU":
@@ -84,19 +89,26 @@ def readBasis(atoms,inputFile):
   for iAtom,atom in enumerate(atoms):
     for num,line in enumerate(moldenBasis[1:]):
       if line != [] and ( line[0] == str(iAtom+1) and line[1]=='0' ):
-        #basis found, no read shells until a blank line is found
+        #basis found, now read shells until a blank line is found
         for num2,line2 in enumerate(moldenBasis[num+1:]):
           if line2==[]:
-            print "stop"
             break
+          elif line2[0] == 'sp':
+            shell="l"
+            length=int(moldenBasis[num+num2+1][1])
+            firstGTO=num+num2+2
+            lastGTO=num+num2+2+length
+            GTOs=[(float(exp),float(coeffS),float(coeffP)) for exp,coeffS,coeffP in moldenBasis[firstGTO:lastGTO]]
+            atom.addGTOs(shell,GTOs)
           elif line2[0] in ['s','p','d']:
-            shell=moldenBasis[num2+1][0]
-            length=int(moldenBasis[num2+1][1])
-            GTOs=[(float(exp),float(coeff)) for exp,coeff in moldenBasis[num2+2:num2+2+length]]
+            shell=moldenBasis[num+num2+1][0]
+            length=int(moldenBasis[num+num2+1][1])
+            firstGTO=num+num2+2
+            lastGTO=num+num2+2+length
+            GTOs=[(float(exp),float(coeff)) for exp,coeff in moldenBasis[firstGTO:lastGTO]]
             atom.addGTOs(shell,GTOs)
           else:
             continue
-
 
 def printData(params,atoms):
   print " $DATA"
@@ -125,6 +137,11 @@ if __name__ == "__main__":
   molden = open(moldenFile).readlines()
 
   params=Parameters()
+  try:
+    params.setTitle(grabGroup(inputFile,"Title")[1][0])
+  except:
+    params.setTitle("molden2gamess")
+
   atoms=readCoord(params,molden)
   readBasis(atoms,molden)
 
