@@ -164,6 +164,24 @@ class Orbitals(object):
     for num,orb in enumerate(self.alpha):
       for s,e in self.gtoMap['d']:
         orb[1][s:e] = [c*math.sqrt(3) for c in orb[1][s:e]]
+    if self.beta != []:
+      for num,orb in enumerate(self.beta):
+	for s,e in self.gtoMap['d']:
+	  orb[1][s:e] = [c*math.sqrt(3) for c in orb[1][s:e]]
+	  
+  def cleanOrbitals(self):
+    for orb in self.alpha:
+      #orb[1][:] = [ 0.0 for c in orb[1][:] if c<1.0e-10]
+      for num,c in enumerate(orb[1]):
+	if c<1.0e-10:
+	  orb[1][num] = 0.0
+	  
+    if self.beta != []:
+      for orb in self.beta:
+	#orb[1][:] = [ 0.0 for c in orb[1][:] if c<1.0e-10]
+	for num,c in enumerate(orb[1]):
+	  if c<1.0e-10:
+	    orb[1][num] = 0.0
 
 
 #%%%%%%%%%%%%
@@ -269,6 +287,7 @@ def readOrbitals(atoms,params,inputFile):
   params.setNumMOs(len(gamessOrbitals.alpha))
 
   gamessOrbitals.fixD()
+  #gamessOrbitals.cleanOrbitals()
   return gamessOrbitals
 
 #%%%%%%%%%%%%
