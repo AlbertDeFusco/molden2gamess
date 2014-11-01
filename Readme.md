@@ -4,7 +4,7 @@ This python script is intented to convert cartesian orbitals and basis set speci
 
 As of right now this script works for
 * RHF and UHF methods
-* Basis sets up to d functions
+* Basis sets up to f functions
 * Basis sets with SP functions
 
 Example Molden format files are provided in the `tests` directory.

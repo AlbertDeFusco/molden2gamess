@@ -84,6 +84,8 @@ class Atom(object):
         numPrim=3
       elif shell[0] == 'd':
         numPrim=6
+      elif shell[0] == 'f':
+        numPrim=10
 
       if shell[0] in self.gtoMap.keys():
         self.gtoMap[shell[0]].append( (numGTOs,numGTOs+numPrim) )
@@ -168,14 +170,67 @@ class Orbitals(object):
       for num,orb in enumerate(self.beta):
 	for s,e in self.gtoMap['d']:
 	  orb[1][s:e] = [c*math.sqrt(3) for c in orb[1][s:e]]
-	  
+
+  def fixF(self):
+    for num,orb in enumerate(self.alpha):
+      for s,e in self.gtoMap['f']:
+        orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
+        # molden order
+        xxx = orb[1][s  ]
+        yyy = orb[1][s+1]
+        zzz = orb[1][s+2]
+        yyx = orb[1][s+3]
+        xxy = orb[1][s+4]
+        xxz = orb[1][s+5]
+        zzx = orb[1][s+6]
+        zzy = orb[1][s+7]
+        yyz = orb[1][s+8]
+        xyz = orb[1][s+9]
+        # gamess order
+        orb[1][s  ] = xxx
+        orb[1][s+1] = yyy
+        orb[1][s+2] = zzz
+        orb[1][s+3] = xxy
+        orb[1][s+4] = xxz
+        orb[1][s+5] = yyx
+        orb[1][s+6] = yyz
+        orb[1][s+7] = zzx
+        orb[1][s+8] = zzy
+        orb[1][s+9] = xyz
+    if self.beta != []:
+      for num,orb in enumerate(self.beta):
+	for s,e in self.gtoMap['f']:
+	  orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
+          # molden order
+          xxx = orb[1][s  ]
+          yyy = orb[1][s+1]
+          zzz = orb[1][s+2]
+          yyx = orb[1][s+3]
+          xxy = orb[1][s+4]
+          xxz = orb[1][s+5]
+          zzx = orb[1][s+6]
+          zzy = orb[1][s+7]
+          yyz = orb[1][s+8]
+          xyz = orb[1][s+9]
+          # gamess order
+          orb[1][s  ] = xxx
+          orb[1][s+1] = yyy
+          orb[1][s+2] = zzz
+          orb[1][s+3] = xxy
+          orb[1][s+4] = xxz
+          orb[1][s+5] = yyx
+          orb[1][s+6] = yyz
+          orb[1][s+7] = zzx
+          orb[1][s+8] = zzy
+          orb[1][s+9] = xyz
+
   def cleanOrbitals(self):
     for orb in self.alpha:
       #orb[1][:] = [ 0.0 for c in orb[1][:] if c<1.0e-10]
       for num,c in enumerate(orb[1]):
 	if c<1.0e-10:
 	  orb[1][num] = 0.0
-	  
+
     if self.beta != []:
       for orb in self.beta:
 	#orb[1][:] = [ 0.0 for c in orb[1][:] if c<1.0e-10]
@@ -245,7 +300,7 @@ def readBasis(atoms,inputFile):
             lastGTO=num+num2+2+length
             GTOs=[(float(exp),float(coeffS),float(coeffP)) for exp,coeffS,coeffP in moldenBasis[firstGTO:lastGTO]]
             atom.addGTOs(shell,GTOs)
-          elif line2[0] in ['s','p','d']:
+          elif line2[0] in ['s','p','d','f']:
             shell=moldenBasis[num+num2+1][0]
             length=int(moldenBasis[num+num2+1][1])
             firstGTO=num+num2+2
@@ -287,7 +342,7 @@ def readOrbitals(atoms,params,inputFile):
   params.setNumMOs(len(gamessOrbitals.alpha))
 
   gamessOrbitals.fixD()
-  #gamessOrbitals.cleanOrbitals()
+  gamessOrbitals.fixF()
   return gamessOrbitals
 
 #%%%%%%%%%%%%
