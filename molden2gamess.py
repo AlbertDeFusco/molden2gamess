@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys
 import math
+import getopt
+global fromTurbomole 
 
 #%%%%%%%%%%%
 #
@@ -162,19 +164,22 @@ class Orbitals(object):
             self.gtoMap[shell] = [ (start,end) ]
       totalGTOs=totalGTOs+nGTOs
 
-  def fixD(self):
+  def turbomole(self):
     for num,orb in enumerate(self.alpha):
       for s,e in self.gtoMap['d']:
         orb[1][s:e] = [c*math.sqrt(3) for c in orb[1][s:e]]
+      for s,e in self.gtoMap['f']:
+        orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
     if self.beta != []:
       for num,orb in enumerate(self.beta):
 	for s,e in self.gtoMap['d']:
 	  orb[1][s:e] = [c*math.sqrt(3) for c in orb[1][s:e]]
+	for s,e in self.gtoMap['f']:
+	  orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
 
-  def fixF(self):
+  def reorderF(self):
     for num,orb in enumerate(self.alpha):
       for s,e in self.gtoMap['f']:
-        orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
         # molden order
         xxx = orb[1][s  ]
         yyy = orb[1][s+1]
@@ -200,7 +205,6 @@ class Orbitals(object):
     if self.beta != []:
       for num,orb in enumerate(self.beta):
 	for s,e in self.gtoMap['f']:
-	  orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
           # molden order
           xxx = orb[1][s  ]
           yyy = orb[1][s+1]
@@ -298,14 +302,14 @@ def readBasis(atoms,inputFile):
             length=int(moldenBasis[num+num2+1][1])
             firstGTO=num+num2+2
             lastGTO=num+num2+2+length
-            GTOs=[(float(exp),float(coeffS),float(coeffP)) for exp,coeffS,coeffP in moldenBasis[firstGTO:lastGTO]]
+            GTOs=[(float(exp.replace('D', 'E')),float(coeffS.replace('D', 'E')),float(coeffP.replace('D', 'E'))) for exp,coeffS,coeffP in moldenBasis[firstGTO:lastGTO]]
             atom.addGTOs(shell,GTOs)
           elif line2[0] in ['s','p','d','f']:
             shell=moldenBasis[num+num2+1][0]
             length=int(moldenBasis[num+num2+1][1])
             firstGTO=num+num2+2
             lastGTO=num+num2+2+length
-            GTOs=[(float(exp),float(coeff)) for exp,coeff in moldenBasis[firstGTO:lastGTO]]
+            GTOs=[(float(exp.replace('D', 'E')),float(coeff.replace('D', 'E'))) for exp,coeff in moldenBasis[firstGTO:lastGTO]]
             atom.addGTOs(shell,GTOs)
           else:
             continue
@@ -341,8 +345,10 @@ def readOrbitals(atoms,params,inputFile):
       count=count+1
   params.setNumMOs(len(gamessOrbitals.alpha))
 
-  gamessOrbitals.fixD()
-  gamessOrbitals.fixF()
+  global fromTurbomole
+  if(fromTurbomole):
+    gamessOrbitals.turbomole()
+  gamessOrbitals.reorderF()
   return gamessOrbitals
 
 #%%%%%%%%%%%%
@@ -376,11 +382,21 @@ def printVec(orbitals):
 
 
 if __name__ == "__main__":
+  fromTurbomole = False
+
+  options,remainder = getopt.getopt(sys.argv[1:], 't', ['turbomole'])
+
+  for opt,arg in options:
+    if opt in ['-t','--turbomole']:
+      fromTurbomole=True
+
   try:
-    moldenFile = sys.argv[1]
+    moldenFile = remainder[0]
   except:
-    print "Usage %s <molden-file>" % sys.argv[0]
+    print "Usage %s [-t | --turbomole] <molden-file>" % sys.argv[0]
     sys.exit(1)
+
+
 
   #read the whole file into a list
   molden = open(moldenFile).readlines()
