@@ -3,7 +3,8 @@ import sys
 import math
 import getopt
 global fromTurbomole 
-
+global hasFfunctions
+hasFfunctions=False
 #%%%%%%%%%%%
 #
 # three clases are used to generate a GAMESS input
@@ -75,6 +76,7 @@ class Atom(object):
     print
 
   def numGTOs(self):
+    global hasFfunctions
     self.gtoMap = {}
     numGTOs=0
     for shell in self.basis:
@@ -88,6 +90,7 @@ class Atom(object):
         numPrim=6
       elif shell[0] == 'f':
         numPrim=10
+	hasFfunctions=True
 
       if shell[0] in self.gtoMap.keys():
         self.gtoMap[shell[0]].append( (numGTOs,numGTOs+numPrim) )
@@ -165,17 +168,20 @@ class Orbitals(object):
       totalGTOs=totalGTOs+nGTOs
 
   def turbomole(self):
+    global hasFfunctions
     for num,orb in enumerate(self.alpha):
       for s,e in self.gtoMap['d']:
         orb[1][s:e] = [c*math.sqrt(3) for c in orb[1][s:e]]
-      for s,e in self.gtoMap['f']:
-        orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
+      if(hasFfunctions):
+	for s,e in self.gtoMap['f']:
+	  orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
     if self.beta != []:
       for num,orb in enumerate(self.beta):
 	for s,e in self.gtoMap['d']:
 	  orb[1][s:e] = [c*math.sqrt(3) for c in orb[1][s:e]]
-	for s,e in self.gtoMap['f']:
-	  orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
+	if(hasFfunctions):
+	  for s,e in self.gtoMap['f']:
+	    orb[1][s:e] = [c*math.sqrt(15) for c in orb[1][s:e]]
 
   def reorderF(self):
     for num,orb in enumerate(self.alpha):
@@ -346,9 +352,11 @@ def readOrbitals(atoms,params,inputFile):
   params.setNumMOs(len(gamessOrbitals.alpha))
 
   global fromTurbomole
+  global hasFfunctions
   if(fromTurbomole):
     gamessOrbitals.turbomole()
-  gamessOrbitals.reorderF()
+  if(hasFfunctions):
+    gamessOrbitals.reorderF()
   return gamessOrbitals
 
 #%%%%%%%%%%%%
